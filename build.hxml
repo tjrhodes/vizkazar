@@ -1,0 +1,9 @@
+# The 2D study of the music visualiser, as one script.
+# Build: haxe build.hxml   (from this folder)
+# Then serve the www folder (e.g. python3 -m http.server -d www 8000) and open it.
+
+-cp src
+-D js-es=6
+-dce full
+-main Main
+-js www/visualiser.js
