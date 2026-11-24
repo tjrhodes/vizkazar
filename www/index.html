@@ -4,82 +4,103 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vizkazar</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500&family=Fira+Sans+Condensed:wght@800&display=swap">
 <style>
-  /* Layout: the pattern fills the screen; one quiet plate of controls sits
-     along the bottom; the welcome sits in the middle until the first click.
-     Colours echo src/Settings.hx (night, cream band, ochre star). */
+  /* Vizkazar, dressed like tomrhodes.it: its rock navy and lichen yellow, Fira Sans, and condensed capitals
+     for the buttons. The pattern fills the screen; one plate of controls sits along the bottom; the welcome sits
+     in the middle until the first click. The words are filled in by the page's script, in English or Italian
+     (src/Words.hx). Fira Sans: SIL Open Font License, see fonts/OFL.txt. */
+  @font-face { font-family: "Fira Sans"; font-weight: 300; font-display: swap; src: url("fonts/fira-sans-latin-300-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Fira Sans"; font-weight: 400; font-display: swap; src: url("fonts/fira-sans-latin-400-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Fira Sans Condensed"; font-weight: 400; font-display: swap; src: url("fonts/fira-sans-condensed-latin-400-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Fira Sans Condensed"; font-weight: 500; font-display: swap; src: url("fonts/fira-sans-condensed-latin-500-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Fira Sans Condensed"; font-weight: 600; font-display: swap; src: url("fonts/fira-sans-condensed-latin-600-normal.woff2") format("woff2"); }
+
   :root {
-    --night: #0d1322;
-    --plate: rgba(13, 19, 34, 0.82);
-    --plate-edge: rgba(239, 230, 210, 0.2);
-    --ink: #efe6d2;
-    --ink-quiet: #a89775;
-    --ochre: #e6a91f;
-    --display: "Fira Sans Condensed", "Arial Narrow", sans-serif;
-    --body: "Fira Sans", "Helvetica Neue", Arial, sans-serif;
+    --rock: #1b2848;
+    --rock-deep: #141e38;
+    --crevice: #151a2b;
+    --lichen: #e9c93a;
+    --lichen-bright: #f3d858;
+    --stone: #dbd2b9;
+    --sand: #a89775;
+    --white-soft: #e6e9f2;
+    --edge: rgba(255, 255, 255, .3);
+    --sans: "Fira Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --cond: "Fira Sans Condensed", "Fira Sans", system-ui, sans-serif;
+    --radius: 6px;
     color-scheme: dark;
   }
   [hidden] { display: none !important; }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
-  body { background: var(--night); color: var(--ink); font: 15px/1.4 var(--body); overflow: hidden; }
+  body { background: var(--crevice); color: var(--stone); font: 300 15px/1.5 var(--sans); overflow: hidden; }
   #stage { position: fixed; inset: 0; }
   #stage canvas { display: block; }
+  :focus-visible { outline: 2px solid var(--lichen); outline-offset: 2px; }
 
-  /* Every button, the file chooser and the menu share one look. */
+  /* Every control shares the site's button look: condensed capitals, a thin outline that turns lichen. */
   button, select, .file-chooser {
-    font: inherit; color: var(--ink); background: transparent; cursor: pointer;
-    border: 1px solid var(--plate-edge); border-radius: 6px; padding: 7px 12px;
+    font: 500 .8rem var(--cond); letter-spacing: .12em; text-transform: uppercase; color: var(--white-soft);
+    background: transparent; cursor: pointer; border: 1px solid var(--edge); border-radius: var(--radius); padding: 8px 12px;
+    transition: border-color .15s ease, color .15s ease, background-color .15s ease;
   }
-  button:hover, select:hover, .file-chooser:hover { border-color: var(--ochre); }
-  :focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+  button:hover, select:hover, .file-chooser:hover { border-color: var(--lichen); color: #fff; }
+  select { background: var(--rock-deep); }
   .file-chooser input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-  .file-chooser:focus-within { outline: 2px solid var(--ochre); outline-offset: 2px; }
+  .file-chooser:focus-within { outline: 2px solid var(--lichen); outline-offset: 2px; }
 
   #welcome {
     position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 18px;
-    text-align: center; padding: 24px; background: rgba(13, 19, 34, 0.55);
+    text-align: center; padding: 24px; background: rgba(21, 26, 43, .6);
   }
-  #welcome h1 { font: 800 clamp(34px, 7vw, 68px)/1 var(--display); margin: 0; letter-spacing: 0.01em; }
-  #welcome p { margin: 0; max-width: 34ch; color: var(--ink-quiet); }
-  #start { font: 800 22px var(--display); padding: 12px 34px; background: var(--ochre); color: var(--night); border-color: var(--ochre); }
+  #welcome .kicker { font: 500 .86rem var(--cond); letter-spacing: .18em; text-transform: uppercase; color: var(--lichen); margin: 0; }
+  #welcome h1 { font: 400 clamp(40px, 8vw, 76px)/1.05 var(--cond); color: #fff; margin: 0; }
+  #welcome p { margin: 0; max-width: 36ch; font-size: 1.05rem; }
+  /* The start button is the site's solid button: lichen, rock text, lifting a touch on hover. */
+  #start {
+    font: 600 .95rem var(--cond); letter-spacing: .12em; padding: 13px 30px; margin-top: 6px;
+    background: var(--lichen); color: var(--rock); border: 2px solid var(--lichen);
+    transition: transform .15s ease, background-color .15s ease;
+  }
+  #start:hover { background: var(--lichen-bright); color: var(--rock); transform: translateY(-2px); }
 
   #controls {
     position: fixed; left: 12px; right: 12px; bottom: max(14px, env(safe-area-inset-bottom)); width: fit-content; margin: 0 auto;
     display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px;
-    padding: 8px 10px;
-    background: var(--plate); border: 1px solid var(--plate-edge); border-radius: 10px;
+    padding: 8px 10px; background: rgba(27, 40, 72, .88); border: 1px solid rgba(255, 255, 255, .14); border-radius: var(--radius);
   }
-  #time { color: var(--ink-quiet); font-variant-numeric: tabular-nums; min-width: 4ch; }
-  #now-playing { color: var(--ink-quiet); padding: 0 6px; max-width: 28ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  label[for="complexity"] { color: var(--ink-quiet); padding-left: 6px; }
+  #play-pause { background: var(--lichen); color: var(--rock); border-color: var(--lichen); min-width: 7.5em; }
+  #play-pause:hover { background: var(--lichen-bright); color: var(--rock); }
+  #now-playing { color: #fff; font-weight: 400; padding: 0 4px 0 6px; max-width: 24ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #time { color: var(--sand); font-variant-numeric: tabular-nums; min-width: 4ch; padding-right: 4px; }
+  #complexity-label { font: 500 .8rem var(--cond); letter-spacing: .12em; text-transform: uppercase; color: var(--sand); padding-left: 6px; }
+  @media (max-width: 560px) { #controls { gap: 6px; padding: 6px; } button, select, .file-chooser { padding: 7px 9px; } #complexity-label { display: none; } }
 </style>
 </head>
 <body>
 
-<div id="stage" role="img" aria-label="A geometric star pattern in 3D that moves with the music"></div>
+<div id="stage" role="img"></div>
 <audio id="player" loop></audio>
 
 <div id="welcome">
-  <h1>Vizkazar</h1>
-  <p>Star patterns from the tiles of Seville, cut, lifted and coloured by the music as it plays.</p>
-  <button id="start">Play</button>
+  <p class="kicker">Lab</p>
+  <h1 id="welcome-title"></h1>
+  <p id="welcome-intro"></p>
+  <button id="start"></button>
 </div>
 
 <div id="controls" hidden>
-  <button id="play-pause" data-play="Play" data-pause="Pause">Pause</button>
+  <button id="play-pause"></button>
   <span id="now-playing"></span>
-  <span id="time" aria-label="Time into the track">0:00</span>
-  <label class="file-chooser">Your own audio<input id="own-audio" type="file" accept="audio/*,video/mp4,.flac,.ogg,.m4a"></label>
-  <button id="microphone" data-refused="Microphone not allowed">Microphone</button>
-  <label for="complexity">Complexity</label>
-  <select id="complexity"><option value="auto">Follow the music</option></select>
+  <span id="time">0:00</span>
+  <label class="file-chooser"><span id="own-audio-label"></span><input id="own-audio" type="file" accept="audio/*,video/mp4,.flac,.ogg,.m4a"></label>
+  <button id="microphone"></button>
+  <label id="complexity-label" for="complexity"></label>
+  <select id="complexity"><option id="follow-the-music" value="auto"></option></select>
+  <button id="full-screen"></button>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="vendor/three.min.js"></script>
 <script src="visualiser.js"></script>
 </body>
 </html>

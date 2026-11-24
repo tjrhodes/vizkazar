@@ -76,6 +76,8 @@ diamond columns of the Rai 2 ident.
 | `src/three/` | Haxe descriptions of the parts of three.js used (r128, loaded by the page) |
 | `src/picture/` | The palette and colour families |
 | `src/Conductor.hx` | Turns what is heard into tiling and contact angle |
+| `src/Changeover.hx` | When a change of tiling lands, in time with the music |
+| `src/Controls.hx`, `src/Words.hx` | The buttons, and every word on the page in English and Italian |
 | `src/Main.hx` | The frame loop that joins them up |
 
 ## Running it
@@ -87,9 +89,17 @@ haxe build.hxml                       # builds www/visualiser.js
 python3 -m http.server -d www 8000    # then open http://localhost:8000
 ```
 
+Everything it needs is in `www/`: three.js r128 (`www/vendor`, MIT licence)
+and Fira Sans (`www/fonts`, SIL Open Font License), so nothing is loaded from
+anywhere else. The page speaks English or Italian, by the browser's language
+or `?lang=it`; `?delay=40` adds 40 thousandths of a second to the pictures'
+wait for the speakers.
+
 ## Not done yet
 
-- Rai 2's zoom from the whole pattern into a single rosette and back, as
-  another way between tilings.
 - Blocks spinning on the beat, not only between tilings.
 - 10-fold patterns.
+
+## Licence
+
+MIT, see `LICENSE`. The default track, amelie2, is by Tom Rhodes.

@@ -56,7 +56,7 @@ class Main {
 		desk.whenJumped = clock.trackJumped;
 		desk.whenNewSound = clock.forget;
 		new Controls(desk, conductor);
-		Browser.window.onresize = stage.fitToWindow;
+		Browser.window.onresize = fitToWindow;
 		Browser.window.requestAnimationFrame(frame);
 	}
 
@@ -142,6 +142,12 @@ class Main {
 
 	static function between(from:Float, to:Float, share:Float):Float {
 		return from + (to - from) * share;
+	}
+
+	/** The window changed shape (a phone turned round): the drawing fits it again, and the field is laid out to its corners. */
+	function fitToWindow() {
+		stage.fitToWindow();
+		field.lay(field.tiling);
 	}
 
 	static function deepOf(shown:Field):Colour {

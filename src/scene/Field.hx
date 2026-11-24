@@ -1,6 +1,7 @@
 package scene;
 
 import Conductor.Pose;
+import js.Browser;
 import pattern.Floor;
 import pattern.Geometry;
 import pattern.Geometry.Point;
@@ -63,9 +64,16 @@ class Field {
 		stage.add(mesh);
 	}
 
-	/** How many edges of a tiling fill the screen across: its pieces show at much the same size whatever the tiling. */
+	/**
+	 * How many edges of a tiling fill the screen across: its pieces show at
+	 * much the same size whatever the tiling. On a screen taller than it is
+	 * wide (a phone held upright), the same number fill its height instead,
+	 * so the pieces come out bigger and there are no more of them to build.
+	 */
 	public static function widthFor(tiling:Tiling):Float {
-		return tiling.edgesAcrossScreen * Settings.fieldShownTimesScreen;
+		final window = Browser.window;
+		final wideness = Math.min(1, window.innerWidth / window.innerHeight);
+		return tiling.edgesAcrossScreen * Settings.fieldShownTimesScreen * wideness;
 	}
 
 	/** How many edges fill the screen across when the view has closed in on the star in the middle (the tiling's biggest tile sits there). */
@@ -73,9 +81,16 @@ class Field {
 		return 2 * tiling.tiles[0].cornerDistance * Settings.closeUpTimesStar;
 	}
 
-	/** How far out from the middle the field is laid (edges): past the screen's corners, whatever its shape. */
+	/**
+	 * How far out from the middle the field is laid (edges): past the
+	 * screen's corners, whatever its shape. A tall screen (a phone held
+	 * upright) shows more of the field top to bottom than across, and more
+	 * again as the camera looks down at it at a slant.
+	 */
 	public function reach():Float {
-		return width * Settings.fieldLaidOutToWidths;
+		final window = Browser.window;
+		final tallness = window.innerHeight / window.innerWidth / Math.cos(Geometry.radians(Settings.viewTiltDegrees));
+		return width * Settings.fieldLaidOutToWidths * Math.max(1, tallness);
 	}
 
 	public function show(shown:Bool) {
