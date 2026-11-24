@@ -57,14 +57,22 @@ class RiseListener {
 		return Math.round(seconds * context.sampleRate);
 	}
 
+	/** How long ago (seconds) the steepest rise found by the last listen reached its top. */
+	public var steepestSecondsAgo(default, null) = 0.0;
+
 	/** The steepest rise, in decibels, anywhere in the last few hundredths of a second of sound. */
 	public function steepestRecentRise():Float {
 		analyser.getFloatTimeDomainData(wave);
 		followLoudness();
-		var steepest = 0.0;
-		for (moment in samplesToRiseOver...loudness.length)
-			if (loudness[moment] > Settings.quietestHitDecibels)
-				steepest = Math.max(steepest, loudness[moment] - loudness[moment - samplesToRiseOver]);
+		var steepest = 0.0, steepestAt = loudness.length - 1;
+		for (moment in samplesToRiseOver...loudness.length) {
+			final rise = loudness[moment] - loudness[moment - samplesToRiseOver];
+			if (loudness[moment] > Settings.quietestHitDecibels && rise > steepest) {
+				steepest = rise;
+				steepestAt = moment;
+			}
+		}
+		steepestSecondsAgo = (loudness.length - 1 - steepestAt) / context.sampleRate;
 		return steepest;
 	}
 

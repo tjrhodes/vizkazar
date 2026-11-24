@@ -134,6 +134,43 @@ class Settings {
 		fadesPerSecond: 10.0
 	};
 
+	// ——— Keeping time: the bars (see sound/BarClock.hx and sound/BarLength.hx) ———
+
+	/** Two kicks this close (seconds) count as at the same moment, when matching kicks to bars. */
+	public static inline final kickTimingSlack = 0.035;
+
+	/** A bar is looked for between these lengths (seconds; about 60 to 150 beats a minute in 4/4), this finely. */
+	public static inline final shortestBarSeconds = 1.6;
+
+	public static inline final longestBarSeconds = 4.2;
+	public static inline final barSearchStepSeconds = 0.005;
+
+	/** The bar length is worked out once this many kicks have come in, if the best length fits at least this well (0 to 1)… */
+	public static inline final kicksBeforeBarIsKnown = 6;
+
+	public static inline final barMustFitAtLeast = 0.4;
+
+	/** …and of the lengths that fit nearly as well as the best (this share of it), the shortest is taken. */
+	public static inline final nearlyAsGoodAsBest = 0.9;
+
+	/** The clock looks back over this long (seconds) of kicks, and keeps in step once this many have landed on beat one. */
+	public static inline final barClockRemembersSeconds = 24.0;
+
+	public static inline final downbeatKicksToKeepStep = 2;
+
+	/** A kick this close to beat one (a share of a sixteenth) counts as on it, and a newly worked-out bar length this different (a share) replaces the old. */
+	public static inline final downbeatSlackSixteenths = 0.45;
+
+	public static inline final barLengthChangesBy = 0.03;
+
+	/** A gap in the kicks this long (seconds, before the bar is known; then bars) means the beat stopped: its next kick is beat one again. */
+	public static inline final secondsWithoutKicksBeforeNewStart = 4.0;
+
+	public static inline final barsWithoutKicksBeforeNewStart = 2;
+
+	/** With no kicks, the clock keeps counting bars for this many, then gives up. */
+	public static inline final barsClockRunsOnWithoutKicks = 16;
+
 	// ——— How sound ripples outwards ———
 
 	/** How far back the memory goes: long enough for sound to ripple out past the screen's corners. */
@@ -251,8 +288,25 @@ class Settings {
 
 	// ——— The wave of turning blocks between tilings (see scene/TurnWave.hx) ———
 
-	/** The wave turns the whole field over in this long (seconds). */
-	public static inline final turnWaveSeconds = 2.4;
+	/**
+	 * A change of tiling lands on beat one of the first bar of a phrase of
+	 * this many bars (counted from when the beat came in): 4, 8 or 16. A
+	 * change picked from the menu lands on the next bar instead.
+	 */
+	public static inline final phraseBars = 4;
+
+	/** The view closes in on the middle star during this many bars before the change, and the wave turns the whole field over in this many. */
+	public static inline final closeUpBars = 1;
+
+	public static inline final turnWaveBars = 1;
+
+	/** With no beat to keep time by, the close-in and the wave take this long instead (seconds). */
+	public static inline final closeUpSecondsWithoutBeat = 1.5;
+
+	public static inline final turnWaveSecondsWithoutBeat = 2.4;
+
+	/** Closed in, the screen is this many times as wide as the middle star. */
+	public static inline final closeUpTimesStar = 1.6;
 
 	/** Each block turns over while the wave travels on this share of the field's reach: more is a wider, softer wave. */
 	public static inline final blockTurnsWhileWaveTravels = 0.25;

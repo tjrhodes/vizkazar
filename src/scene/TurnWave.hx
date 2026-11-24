@@ -18,24 +18,27 @@ class TurnWave {
 
 	var reach = 1.0;
 
+	var seconds = 1.0;
+
 	/** What to do once every block has turned over (the new pattern takes over), once. */
 	var whenTurned:Null<() -> Void> = null;
 
 	public function new() {}
 
-	/** Sets the wave running from the middle out to `reach` (edges). */
-	public function start(reach:Float, whenTurned:() -> Void) {
+	/** Sets the wave running from the middle out to `reach` (edges), turning the whole field over in `seconds`. */
+	public function start(reach:Float, seconds:Float, whenTurned:() -> Void) {
 		going = true;
 		front = 0;
 		this.reach = reach;
+		this.seconds = seconds;
 		this.whenTurned = whenTurned;
 	}
 
-	/** Moves the wave on: it crosses the whole field in the same time, however big the field. */
-	public function advance(seconds:Float) {
+	/** Moves the wave on by a frame of `frameSeconds`: it crosses the whole field in its time, however big the field. */
+	public function advance(frameSeconds:Float) {
 		if (!going)
 			return;
-		front += seconds * reach * (1 + Settings.blockTurnsWhileWaveTravels) / Settings.turnWaveSeconds;
+		front += frameSeconds * reach * (1 + Settings.blockTurnsWhileWaveTravels) / seconds;
 		if (progress() >= 1)
 			finish();
 	}

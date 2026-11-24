@@ -38,11 +38,23 @@ diamond columns of the Rai 2 ident.
   shade of the tiling's family; **the bassline** colours the star wedges
   and widens the grooves.
 - **Complexity** steps through four tilings (4-, 6-, 8- and 12-fold) as the
-  music swells and thins. **A wave of turning blocks** takes you between
-  them: it runs out from the middle, and as it reaches each block the block
-  turns over like a card, the old pattern on its front and the new one on
-  its back. The scale and the ground's colour move to the new tiling's as
-  the wave goes (see `src/scene/TurnWave.hx`).
+  music swells and thins. Changes land **in time with the music**: on beat
+  one of the first bar of a phrase (4 bars, counted from when the beat came
+  in; see `src/Changeover.hx`). During the bar before, the view closes in on
+  the star in the middle. On the beat, **a wave of turning blocks** runs out
+  from the middle over one bar: as it reaches each block, the block turns
+  over like a card, the old pattern on its front and the new one on its
+  back, while the view pulls back out onto the new pattern (see
+  `src/scene/TurnWave.hx`). A change picked from the menu comes on the
+  next bar. With no beat (an intro, a breakdown) it goes after a short
+  close-in.
+- **Keeping time**: the bars are found from the kicks (`src/sound/BarClock.hx`,
+  `src/sound/BarLength.hx`). A bar is the length after which the kicks come
+  round again and that puts them all on its sixteenths; the first kick after
+  a silence is beat one, and the clock keeps in step with the kicks that land
+  on beat one. On amelie2 it finds the 3-second bar within a few seconds of
+  the first sounds, and changes land within about a hundredth of a second of
+  the beat.
 
 ## Where things are
 

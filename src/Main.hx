@@ -4,6 +4,8 @@ import picture.Palette;
 import scene.Field;
 import scene.Stage;
 import scene.TurnWave;
+import sound.BarClock;
+import sound.Ear.Moment;
 import sound.Memory;
 import sound.SoundDesk;
 
@@ -13,9 +15,11 @@ import sound.SoundDesk;
  *   2. the memory keeps what it heard (so sound can ripple outwards),
  *   3. the conductor decides the tiling and the shape of the stars,
  *   4. the field rebuilds its columns and the stage draws it.
- * When the conductor changes tiling, a wave of turning blocks runs out
- * from the middle, turning the old pattern over into the new one (see
- * TurnWave).
+ * When the conductor changes tiling, the change waits for the first beat
+ * of the next phrase (see Changeover): the view closes in on the middle
+ * star during the bar before, then a wave of turning blocks runs out from
+ * the middle, turning the old pattern over into the new one (see
+ * TurnWave), while the view pulls back out.
  */
 class Main {
 	static inline final millisecondsInASecond = 1000;
@@ -25,13 +29,15 @@ class Main {
 	final conductor = new Conductor();
 	final stage:Stage;
 	final wave = new TurnWave();
+	final clock = new BarClock();
+	final changeover = new Changeover();
 
 	/** The field on show, and the one the wave is turning over into. */
 	var field:Field;
 
 	var nextField:Field;
 
-	/** The conductor has asked for a new tiling, to be shown once any wave under way has finished. */
+	/** The conductor has asked for a new tiling, to be planned once any change under way has finished. */
 	var changeWaiting = false;
 
 	var lastFrameAt = 0.0;
@@ -52,33 +58,53 @@ class Main {
 		Browser.window.requestAnimationFrame(frame);
 	}
 
-	/** One frame; `clock` is the browser's milliseconds since the page opened. */
-	function frame(clock:Float) {
-		final now = clock / millisecondsInASecond;
+	/** One frame; `millisecondsOpen` is how long the page has been open. */
+	function frame(millisecondsOpen:Float) {
+		final now = millisecondsOpen / millisecondsInASecond;
 		final frameSeconds = now - lastFrameAt;
 		lastFrameAt = now;
-		final moment = desk.ear.hear(frameSeconds);
-		memory.remember(moment, now);
+		final moment = listen(frameSeconds, now);
 		if (conductor.follow(moment, frameSeconds))
 			changeWaiting = true;
-		startWaveIfDue();
+		planChangeIfDue(now);
+		startWaveIfDue(now);
 		wave.advance(frameSeconds);
 		final pose = conductor.pose(moment, now);
 		build(pose, now);
-		stage.show(widthShown(), pose.zoom);
+		stage.show(widthShown(now), pose.zoom);
 		Browser.window.requestAnimationFrame(frame);
 	}
 
-	/** Lays the new tiling and sets the wave running, unless the conductor has changed its mind back again. */
-	function startWaveIfDue() {
-		if (!changeWaiting || wave.going)
+	/** This frame's sound: remembered (so it can ripple outwards), and its kick, if any, kept time by. */
+	function listen(frameSeconds:Float, now:Float):Moment {
+		final moment = desk.ear.hear(frameSeconds);
+		memory.remember(moment, now);
+		if (moment.kickLandedSecondsAgo != null)
+			clock.hearKick(now - moment.kickLandedSecondsAgo);
+		return moment;
+	}
+
+	/**
+	 * Plans the change the conductor asked for, unless one is under way or
+	 * it has changed its mind back again: the new tiling is laid now, out
+	 * of sight. A change picked from the menu comes on the next bar.
+	 */
+	function planChangeIfDue(now:Float) {
+		if (!changeWaiting || changeover.isPlanned() || wave.going)
 			return;
 		changeWaiting = false;
 		if (conductor.tiling == field.tiling)
 			return;
 		nextField.lay(conductor.tiling);
+		changeover.plan(clock, now, conductor.pinnedTiling != null);
+	}
+
+	/** On the planned beat, the new field comes into sight, on its edge, and the wave sets off. */
+	function startWaveIfDue(now:Float) {
+		if (!changeover.isDue(now))
+			return;
 		nextField.show(true);
-		wave.start(Math.max(field.reach(), nextField.reach()), turnedOver);
+		wave.start(Math.max(field.reach(), nextField.reach()), changeover.turnSeconds, turnedOver);
 	}
 
 	/** This frame's columns: during a wave, the old ones turning up onto their edges and the new ones turning down. */
@@ -93,11 +119,19 @@ class Main {
 		stage.tint(Palette.blend(deepOf(field), deepOf(nextField), wave.progress()));
 	}
 
-	/** How much of the field shows across the screen: during a wave, moving from the old tiling's scale to the new one's. */
-	function widthShown():Float {
-		if (!wave.going)
-			return field.width;
-		return field.width + (nextField.width - field.width) * Ease.gentlyBetween(0, wave.progress(), 1);
+	/**
+	 * How much of the field shows across the screen (edges): closing in on
+	 * the middle star before a change, and pulling back out from it onto the
+	 * new tiling as the blocks turn.
+	 */
+	function widthShown(now:Float):Float {
+		if (wave.going)
+			return between(field.closeUpWidth(), nextField.width, Ease.gentlyBetween(0, wave.progress(), 1));
+		return between(field.width, field.closeUpWidth(), changeover.closedIn(now));
+	}
+
+	static function between(from:Float, to:Float, share:Float):Float {
+		return from + (to - from) * share;
 	}
 
 	static function deepOf(shown:Field):Colour {

@@ -9,6 +9,8 @@ typedef Moment = {
 	noteStrengths:Array<Float>,
 	/** Jumps up the instant a kick drum lands, further the sharper the kick (up to 1), then fades. */
 	kick:Float,
+	/** If a kick landed since the last listen, how long ago (seconds), to find the bars by; otherwise null. */
+	kickLandedSecondsAgo:Null<Float>,
 	/** The same for a snare. */
 	snare:Float,
 	/** Which of the twelve notes the bassline is on, and how strongly the bass is sounding. */
@@ -64,6 +66,7 @@ class Ear {
 		return {
 			noteStrengths: noteStrengths.copy(),
 			kick: kicks.follow(seconds),
+			kickLandedSecondsAgo: kicks.landedSecondsAgo,
 			snare: snares.follow(seconds),
 			bands: equaliser.follow(quick, seconds),
 			bassNote: strongestOf(bassNoteStrengths),

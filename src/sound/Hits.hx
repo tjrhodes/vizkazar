@@ -34,10 +34,14 @@ class Hits {
 		listener = new RiseListener(context, sound, kind.lowestHz, kind.highestHz);
 	}
 
+	/** If a hit landed in this frame's listen, how long ago it landed (seconds); otherwise null. */
+	public var landedSecondsAgo(default, null):Null<Float> = null;
+
 	/** Listens for this frame (`seconds` since the last) and answers the strength now. */
 	public function follow(seconds:Float):Float {
 		final steepness = listener.steepestRecentRise();
 		final isHit = steepness >= kind.risesAtLeastDecibels && secondsSinceHit >= Settings.shortestGapBetweenHits;
+		landedSecondsAgo = isHit ? listener.steepestSecondsAgo : null;
 		final size = (steepness - kind.sizeCountsFromDecibels) / (kind.fullRiseDecibels - kind.sizeCountsFromDecibels);
 		strength = isHit ? Math.max(strength, Ease.within(0, size, 1)) : Ease.toward(strength, 0, kind.fadesPerSecond, seconds);
 		secondsSinceHit = isHit ? 0 : secondsSinceHit + seconds;

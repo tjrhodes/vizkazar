@@ -68,6 +68,11 @@ class Field {
 		return tiling.edgesAcrossScreen * Settings.fieldShownTimesScreen;
 	}
 
+	/** How many edges fill the screen across when the view has closed in on the star in the middle (the tiling's biggest tile sits there). */
+	public function closeUpWidth():Float {
+		return 2 * tiling.tiles[0].cornerDistance * Settings.closeUpTimesStar;
+	}
+
 	/** How far out from the middle the field is laid (edges): past the screen's corners, whatever its shape. */
 	public function reach():Float {
 		return width * Settings.fieldLaidOutToWidths;
