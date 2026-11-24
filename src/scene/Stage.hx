@@ -3,7 +3,6 @@ package scene;
 import js.Browser;
 import js.html.Element;
 import pattern.Geometry;
-import pattern.Tilings.Tiling;
 import picture.Palette;
 import three.Three;
 
@@ -11,40 +10,41 @@ import three.Three;
 typedef Spot = {x:Float, y:Float, z:Float};
 
 /**
- * The 3D world: soft matte light from behind the camera (so every wall is
- * lit alike, block faces towards you bright and faces away dark), and a fog in the tiling's own deep
- * colour, so the far end of the corridor fades into the pattern's colour,
- * never into black. The camera sits in the middle of the corridor looking
- * down it, swaying a little, and a kick makes it lunge.
+ * The 3D world, drawn the RAI 2 way: flat. There is no light and no
+ * perspective. The camera looks down at the field of blocks from a little
+ * in front, so you see the tops of the blocks and their sides hanging
+ * below them, every face in a flat tone (see MeshWriter). Things further
+ * away are not smaller, so the field reads as a clean drawing.
+ *
+ * The field lies flat (x across, y up the screen), blocks stand up out of
+ * it (z), and the camera looks at its middle.
  */
 class Stage {
+	/** The camera stands this far from the middle of the field: far enough that every block is in front of it. */
+	static inline final cameraDistance = 100.0;
+
 	final scene = new Scene();
-	final camera:PerspectiveCamera;
+	final camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 2 * cameraDistance);
 	final renderer = new WebGLRenderer({antialias: true});
-	final fog = new Fog(Settings.nightColour, Settings.fogStartsCorridorWidths, Settings.corridorLength);
+	var aspect = 1.0;
 
 	public function new(holder:Element) {
-		camera = new PerspectiveCamera(Settings.fieldOfViewDegrees, 1, Settings.nearestSeen, Settings.furthestSeen);
 		scene.background = new Color(Settings.nightColour);
-		scene.fog = fog;
 		holder.appendChild(renderer.domElement);
-		light();
+		placeCamera();
 		fitToWindow();
 	}
 
-	/** Puts something (a wall) into the world. */
+	/** Puts something (a field of blocks) into the world. */
 	public function add(thing:Object3D) {
 		scene.add(thing);
 	}
 
-	/** Soft, matte light: the sky behind the camera, night ahead, and one gentle sun (see Settings). */
-	function light() {
-		final sky = new HemisphereLight(Settings.skyLightColour, Settings.groundLightColour, Settings.skyLightStrength);
-		sky.position.set(Settings.skyLightComesFrom.x, Settings.skyLightComesFrom.y, Settings.skyLightComesFrom.z);
-		scene.add(sky);
-		final sun = new DirectionalLight(Settings.sunColour, Settings.sunStrength);
-		sun.position.set(Settings.sunComesFrom.x, Settings.sunComesFrom.y, Settings.sunComesFrom.z);
-		scene.add(sun);
+	/** In front of the field and above it, tilted so the blocks' tops and front sides both show. */
+	function placeCamera() {
+		final tilt = Geometry.radians(Settings.viewTiltDegrees);
+		camera.position.set(0, -Math.sin(tilt) * cameraDistance, Math.cos(tilt) * cameraDistance);
+		camera.lookAt(0, 0, 0);
 	}
 
 	/** Matches the drawing to the window, pixel for pixel even on sharp screens (up to a limit). */
@@ -52,38 +52,22 @@ class Stage {
 		final window = Browser.window;
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, Settings.sharpestPixelRatio));
 		renderer.setSize(window.innerWidth, window.innerHeight);
-		camera.aspect = window.innerWidth / window.innerHeight;
-		camera.updateProjectionMatrix();
+		aspect = window.innerWidth / window.innerHeight;
 	}
 
-	/** The fog and the far end take the tiling's own deep colour. */
-	public function tintFor(tiling:Tiling) {
-		tintHex(tiling.colours.deep);
-	}
-
-	/** The fog and the far end in any colour (passing through a doorway, a blend of the old deep and the new). */
+	/** The ground between the blocks, in any colour (between scenes, a blend of the old and the new). */
 	public function tint(colour:Colour) {
-		tintHex(Palette.hexOf(colour));
+		scene.background = new Color(Palette.hexOf(colour));
 	}
 
-	function tintHex(hex:Int) {
-		fog.color.setHex(hex);
-		scene.background = new Color(hex);
-	}
-
-	/** Draws one frame. `lunge` above 1 narrows the view for a moment (a kick); `now` is seconds since the page opened. */
-	public function show(lunge:Float, now:Float) {
-		camera.fov = Settings.fieldOfViewDegrees / lunge;
+	/** Draws one frame, showing `width` edges of the field across the screen; `zoom` above 1 moves in (a kick). */
+	public function show(width:Float, zoom:Float) {
+		final halfWidth = width / 2 / zoom, halfHeight = width / 2 / zoom / aspect;
+		camera.left = -halfWidth;
+		camera.right = halfWidth;
+		camera.top = halfHeight;
+		camera.bottom = -halfHeight;
 		camera.updateProjectionMatrix();
-		camera.position.set(0, 0, 0);
-		camera.lookAt(Settings.cameraWanders * wave(now, Settings.cameraWandersAcrossPerSecond),
-			Settings.cameraWanders * wave(now, Settings.cameraWandersUpPerSecond), -Settings.cameraLooksThisFarAhead);
-		camera.rotation.z += Geometry.radians(Settings.cameraRollsDegrees) * wave(now, Settings.cameraRollsPerSecond);
 		renderer.render(scene, camera);
-	}
-
-	/** A slow swing between -1 and 1, `perSecond` times a second. */
-	static function wave(now:Float, perSecond:Float):Float {
-		return Math.sin(now * perSecond * Geometry.fullTurn);
 	}
 }

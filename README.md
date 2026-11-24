@@ -1,50 +1,48 @@
 # Vizkazar
 
 A Lab piece for [tomrhodes.it](https://tomrhodes.it): Islamic star patterns
-from the tiles of Seville, built as matte 3D solids and cut, lifted and
-coloured live by music. The motion takes its cue from the 2019 RAI channel
-idents (Rai 3 and Rai 4).
+from the tiles of Seville, built as solid blocks and raised, coloured and
+turned over live by music. The look takes its cue from the RAI channel
+idents by ELOISA, above all Rai 2: flat colour, no light, solids drawn with
+three tones.
 
 It plays `www/audio/amelie2.mp3` by default, or any audio file you choose, or
 the microphone.
 
+This is the `spinning-blocks` branch. The earlier 3D corridor (the "EQ
+room") is parked on `main`, tagged `eq-tunnel`.
+
 ## The idea
 
-A corridor, like the room in the RAI 4 ident: floor, ceiling and both
-walls carry the same wall of Alcazar blocks, mirrored, so wherever you look
-there is a lit solid surface. The walls slide towards the camera for ever.
+A field of columns seen from above and a little in front, like the
+diamond columns of the Rai 2 ident.
 
 - **The pattern** is drawn the way the originals can be: lay plain polygons
   edge to edge, then from the middle of every edge send two lines into the
   tile at one fixed angle (the *contact angle*). Where they cross, stars
   appear. See `src/pattern/StarCutter.hx`.
-- **Large solid blocks**: every kite and every star wedge is a deep block,
-  packed edge to edge out of a cream wall; the grooves between them are the
-  strapwork. Each wall is exactly as wide as a line the pattern is mirrored
-  along, preferring one that runs along a white gap (see
-  `pattern/MirrorLines.hx`), so the pattern folds round each corner like
-  paper: a block crossing the corner is cut down its own middle and is
-  whole again once folded. Blocks near a corner are **corner blocks**, one
-  block folded round it, with a 45° face across the inside of the fold that
-  moves out along the diagonal as the block grows.
-- **A 16-band graphic equaliser**: each block stands out of the wall as far
-  as its band is loud. Round each star the wedges carry the low bands and
-  the kites the high ones, mirrored left to right. Blocks further down the
-  corridor show the sound from a moment ago, so the music runs away down
-  the walls.
-- **Kicks** squeeze the stars (the contact angle swings), push every block
-  out, rush the walls on and make the camera lunge. **Snares** lighten the
-  faces as a ring running down the corridor. **Notes** light the kite faces
-  in their shade of the tiling's colour family; **the bassline** colours the
-  star wedges and widens the grooves.
+- **Columns, drawn flat**: every kite and every star wedge is a column
+  standing out of the ground; the grooves between them are the strapwork.
+  There is no light and no perspective. Each face takes one of three flat
+  tones by the way it points: tops in a clean colour, sides facing left in
+  a darker tone, sides facing right darker still (see
+  `src/scene/MeshWriter.hx`). Each tiling keeps to one colour family plus
+  white, the way each RAI channel has its own colour.
+- **A 16-band graphic equaliser**: each column stands as tall as its band
+  is loud. Round each star the wedges carry the low bands and the kites the
+  high ones, mirrored left to right. Columns further from the middle show
+  the sound from a moment ago, so the music ripples outwards.
+- **Kicks** squeeze the stars (the contact angle swings), raise every
+  column and move the camera in. **Snares** whiten the wedges' tops as a
+  ring rippling outwards. **Notes** colour the kites' white tops in their
+  shade of the tiling's family; **the bassline** colours the star wedges
+  and widens the grooves.
 - **Complexity** steps through four tilings (4-, 6-, 8- and 12-fold) as the
-  music swells and thins. **A doorway** takes you between them, without
-  changing pace: a short way down the tunnel a door grows across it (its
-  frame rises out of the walls, its blocks slide in like a camera iris
-  closing), carrying a rosette of the next pattern in its own colours.
-  Once it is shut, the next corridor is built behind it. You travel on to
-  it, and when it fills the screen it opens again the same way. The fog
-  shifts colour as you go through.
+  music swells and thins. **A wave of turning blocks** takes you between
+  them: it runs out from the middle, and as it reaches each block the block
+  turns over like a card, the old pattern on its front and the new one on
+  its back. The scale and the ground's colour move to the new tiling's as
+  the wave goes (see `src/scene/TurnWave.hx`).
 
 ## Where things are
 
@@ -53,7 +51,7 @@ there is a lit solid surface. The walls slide towards the camera for ever.
 | `src/Settings.hx` | Every tunable number and colour, in one place |
 | `src/pattern/` | The geometry: tilings, laying the floor, cutting stars |
 | `src/sound/` | Listening: sources, the two spectrums, notes, bassline, kick and snare hits, the equaliser, the memory |
-| `src/scene/` | The 3D world: stage, light and fog, the corridor, the wall of blocks, the doorway between tilings |
+| `src/scene/` | The 3D world: the flat-drawn stage, the field of columns, the wave between tilings, writing the blocks |
 | `src/three/` | Haxe descriptions of the parts of three.js used (r128, loaded by the page) |
 | `src/picture/` | The palette and colour families |
 | `src/Conductor.hx` | Turns what is heard into tiling and contact angle |
@@ -70,6 +68,7 @@ python3 -m http.server -d www 8000    # then open http://localhost:8000
 
 ## Not done yet
 
-- Kites that meet at a corner belong to different tiles, so one visible shape
-  can carry two or three shades. Decide whether to keep that faceted look.
-- 10-fold patterns and wrapping the pattern onto a dome.
+- Rai 2's zoom from the whole pattern into a single rosette and back, as
+  another way between tilings.
+- Blocks spinning on the beat, not only between tilings.
+- 10-fold patterns.

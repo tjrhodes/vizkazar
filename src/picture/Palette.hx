@@ -18,8 +18,8 @@ typedef FamilyInHex = {deep:Int, shades:Array<Int>};
 class Palette {
 	static inline final brightest = 255;
 
-	public static final starAsleep = fromHex(Settings.starAsleepColour);
-	public static final band = fromHex(Settings.bandColour);
+	/** The white every RAI ident keeps beside its one colour. */
+	public static final white = fromHex(Settings.whiteColour);
 
 	/** Splits a colour written the web way (0xRRGGBB) into its three parts. */
 	static function fromHex(hex:Int):Colour {

@@ -1,21 +1,21 @@
 import js.Browser;
-import scene.Corridor;
 import Conductor.Pose;
 import picture.Palette;
-import scene.Door;
-import scene.Doorway;
+import scene.Field;
 import scene.Stage;
+import scene.TurnWave;
 import sound.Memory;
 import sound.SoundDesk;
 
 /**
  * The whole piece in one loop. Every frame:
  *   1. the ear listens to the sound (notes, bass, drums, equaliser bands),
- *   2. the memory keeps what it heard (so sound can run down the corridor),
+ *   2. the memory keeps what it heard (so sound can ripple outwards),
  *   3. the conductor decides the tiling and the shape of the stars,
- *   4. the corridor rebuilds its blocks and the stage draws it.
- * When the conductor changes tiling, a door into the new pattern closes
- * across the corridor ahead, and you travel on through it (see Doorway).
+ *   4. the field rebuilds its columns and the stage draws it.
+ * When the conductor changes tiling, a wave of turning blocks runs out
+ * from the middle, turning the old pattern over into the new one (see
+ * TurnWave).
  */
 class Main {
 	static inline final millisecondsInASecond = 1000;
@@ -24,15 +24,14 @@ class Main {
 	final memory = new Memory();
 	final conductor = new Conductor();
 	final stage:Stage;
-	final doorway = new Doorway();
-	final door:Door;
+	final wave = new TurnWave();
 
-	/** The corridor you are in, and the one waiting behind the door. */
-	var corridor:Corridor;
+	/** The field on show, and the one the wave is turning over into. */
+	var field:Field;
 
-	var nextCorridor:Corridor;
+	var nextField:Field;
 
-	/** The conductor has asked for a new tiling, to be shown once any doorway under way is through. */
+	/** The conductor has asked for a new tiling, to be shown once any wave under way has finished. */
 	var changeWaiting = false;
 
 	var lastFrameAt = 0.0;
@@ -44,12 +43,10 @@ class Main {
 	function new() {
 		desk = new SoundDesk(cast Browser.document.getElementById("player"));
 		stage = new Stage(Browser.document.getElementById("stage"));
-		corridor = new Corridor(stage);
-		nextCorridor = new Corridor(stage);
-		nextCorridor.show(false);
-		door = new Door(stage);
-		corridor.lay(conductor.tiling);
-		stage.tintFor(conductor.tiling);
+		field = new Field(stage);
+		nextField = new Field(stage);
+		nextField.show(false);
+		field.lay(conductor.tiling);
 		new Controls(desk, conductor);
 		Browser.window.onresize = stage.fitToWindow;
 		Browser.window.requestAnimationFrame(frame);
@@ -64,55 +61,54 @@ class Main {
 		memory.remember(moment, now);
 		if (conductor.follow(moment, frameSeconds))
 			changeWaiting = true;
-		openDoorwayIfDue();
+		startWaveIfDue();
+		wave.advance(frameSeconds);
 		final pose = conductor.pose(moment, now);
-		moveOn(pose, now, frameSeconds * (Settings.travelPerSecond + moment.kick * Settings.kickRushesOn));
-		stage.show(pose.zoom, now);
+		build(pose, now);
+		stage.show(widthShown(), pose.zoom);
 		Browser.window.requestAnimationFrame(frame);
 	}
 
-	/** Lays the new tiling behind a door down the corridor, unless the conductor has changed its mind back again. */
-	function openDoorwayIfDue() {
-		if (!changeWaiting || doorway.going)
+	/** Lays the new tiling and sets the wave running, unless the conductor has changed its mind back again. */
+	function startWaveIfDue() {
+		if (!changeWaiting || wave.going)
 			return;
 		changeWaiting = false;
-		if (conductor.tiling == corridor.tiling())
+		if (conductor.tiling == field.tiling)
 			return;
-		nextCorridor.lay(conductor.tiling);
-		door.lay(conductor.tiling);
-		door.show(true);
-		doorway.start(goThrough);
+		nextField.lay(conductor.tiling);
+		nextField.show(true);
+		wave.start(Math.max(field.reach(), nextField.reach()), turnedOver);
 	}
 
-	/**
-	 * Travels on. During a doorway: the door, and once it has shut, the old
-	 * corridor only up to it and the new one beyond it (before that the old
-	 * corridor runs on through the open door).
-	 */
-	function moveOn(pose:Pose, now:Float, travel:Float) {
-		doorway.approach(travel);
-		final nextIsBehind = doorway.nextIsBehind(), door = doorway.distance;
-		nextCorridor.show(nextIsBehind);
-		corridor.update(pose, memory, now, travel, -Settings.corridorBehindCamera, nextIsBehind ? door : Settings.corridorLength);
-		if (nextIsBehind)
-			nextCorridor.update(pose, memory, now, travel, door, Settings.corridorLength);
-		if (doorway.going) {
-			this.door.update(pose, memory, now, door, doorway.closed(), doorway.shut());
-			stage.tint(Palette.blend(deepOf(corridor), deepOf(nextCorridor), doorway.opening()));
+	/** This frame's columns: during a wave, the old ones turning up onto their edges and the new ones turning down. */
+	function build(pose:Pose, now:Float) {
+		if (!wave.going) {
+			field.build(pose, memory, now, _ -> 0);
+			stage.tint(deepOf(field));
+			return;
 		}
+		field.build(pose, memory, now, wave.oldBlockTurn);
+		nextField.build(pose, memory, now, wave.newBlockTurn);
+		stage.tint(Palette.blend(deepOf(field), deepOf(nextField), wave.progress()));
 	}
 
-	static function deepOf(shown:Corridor):Colour {
-		return Palette.family(shown.tiling().colours).deep;
+	/** How much of the field shows across the screen: during a wave, moving from the old tiling's scale to the new one's. */
+	function widthShown():Float {
+		if (!wave.going)
+			return field.width;
+		return field.width + (nextField.width - field.width) * Ease.gentlyBetween(0, wave.progress(), 1);
 	}
 
-	/** Through the door: the new corridor is the one you are in, and the old one waits, hidden, for the next doorway. */
-	function goThrough() {
-		final old = corridor;
-		corridor = nextCorridor;
-		nextCorridor = old;
-		nextCorridor.show(false);
-		door.show(false);
-		stage.tintFor(corridor.tiling());
+	static function deepOf(shown:Field):Colour {
+		return Palette.family(shown.tiling.colours).deep;
+	}
+
+	/** Every block has turned: the new field is the one on show, and the old one waits, hidden, for the next change. */
+	function turnedOver() {
+		final old = field;
+		field = nextField;
+		nextField = old;
+		nextField.show(false);
 	}
 }

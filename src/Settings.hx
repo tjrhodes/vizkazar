@@ -134,15 +134,9 @@ class Settings {
 		fadesPerSecond: 10.0
 	};
 
-	/** A snare lightens the pieces it reaches this far towards cream (at full strength). */
-	public static inline final snareLightensTowardsCream = 0.55;
+	// ——— How sound ripples outwards ———
 
-	// ——— How sound travels down the corridor ———
-
-	/** A block one corridor-width further away shows the sound from this much earlier. */
-	public static inline final echoSecondsPerCorridorWidth = 0.1;
-
-	/** How far back the memory goes: long enough to reach the far end of the corridor. */
+	/** How far back the memory goes: long enough for sound to ripple out past the screen's corners. */
 	public static inline final secondsRemembered = 1.5;
 
 	// ——— The graphic equaliser (see sound/Equaliser.hx) ———
@@ -195,21 +189,20 @@ class Settings {
 
 	public static inline final contactAngleDriftsPerSecond = 0.23;
 
-	/** A kick also narrows the camera's view a touch, like a lunge forward (share of the view). */
+	/** A kick also moves the camera in a touch (share of the view). */
 	public static inline final kickPushesIn = 0.06;
 
-	// ——— Colours ———
-	public static inline final nightColour = 0x0d1322; // the grout between tiles, and the sky
-	public static inline final starAsleepColour = 0x0b0b10; // the black stars of the zellige
-	public static inline final bandColour = 0xefe6d2; // the cream strapwork
+	// ——— Colours: the RAI 2 way, one colour family plus white and a near-black ———
 
-	/** A star takes the shade of the bassline's note; this is how far it goes at full bass (0 to 1). */
-	public static inline final starGlowAtFullBass = 0.6;
+	/** The ground before any pattern is laid, and the white every RAI ident keeps beside its colour. */
+	public static inline final nightColour = 0x0d1322;
+
+	public static inline final whiteColour = 0xffffff;
 
 	/**
-	 * One colour family per tiling (see Palette.Family): `deep` when nothing
-	 * sounds, `shades` round the pitch wheel. Cobalt and ochre are from the
-	 * Seville tiles; green and purple from the RAI 3 and RAI 4 idents.
+	 * One colour family per tiling (see Palette.Family): `deep` is the
+	 * ground between the columns and darkens their sides, `shades` go round
+	 * the pitch wheel. Like the RAI channels, each tiling has its own hue.
 	 */
 	public static final cobaltFamily = {deep: 0x16234d, shades: [0x2e63b8, 0x4f8fd6, 0x9cc8f0]};
 
@@ -217,118 +210,58 @@ class Settings {
 	public static final purpleFamily = {deep: 0x251240, shades: [0x6d3f8f, 0xa646d9, 0xe596f2]};
 	public static final ochreFamily = {deep: 0x2e1a0e, shades: [0xb9432e, 0xdd7a1f, 0xe6a91f]};
 
+	/** A column's sides are its shade darkened this far towards the deep colour (0 not at all, 1 all the way): left, then right. */
+	public static inline final leftSidesDarken = 0.3;
+
+	public static inline final rightSidesDarken = 0.6;
+
+	/** A face pointing up at least this much (0 sideways, 1 straight up) takes the top's tone. */
+	public static inline final facesCountAsTopsFrom = 0.5;
+
+	/** A kite's white top takes on this much of its shade (0 to 1) when its notes sound fully. */
+	public static inline final kiteTopTakesNoteShade = 0.7;
+
+	/** A full snare turns the wedges' tops this far towards white (0 to 1). */
+	public static inline final snareWhitensWedges = 0.6;
+
 	/** The strapwork's width in edges with no bass, and how much wider full bass makes it. */
 	public static inline final bandWidth = 0.05;
 
 	public static inline final bassWidensBands = 1.6;
 
-	// ——— The corridor (see scene/Corridor.hx and scene/WallBlocks.hx) ———
-	// Corridor units: half the corridor's width is 1.
+	// ——— The field of columns (see scene/Field.hx) ———
 
-	/**
-	 * How wide half the corridor is, in edges: about this share of the
-	 * tiling's own scale (so big shapes, a few across a wall), moved to the
-	 * nearest line the pattern is mirrored along (see MirrorLines).
-	 */
-	public static inline final wallHalfWidthTimesScreen = 0.13;
+	/** How many edges show across the screen: this share of the tiling's own scale, so the pieces look much the same size in every tiling. */
+	public static inline final fieldShownTimesScreen = 0.55;
 
-	/**
-	 * A corner block's 45° face, across the inside of the fold, runs this
-	 * many times the block's height from the corner along each wall: the
-	 * higher the block stands, the further out the face.
-	 */
-	public static inline final cornerBevelTimesHeight = 3.0;
-
-	/** How far the corridor runs ahead of the camera, and behind it. */
-	public static inline final corridorLength = 10.0;
-
-	public static inline final corridorBehindCamera = 1.5;
+	/** The field is laid out to this many screen widths from the middle, past the screen's corners. */
+	public static inline final fieldLaidOutToWidths = 0.9;
 
 	/** Tiles are laid this far (edges) beyond where they are needed, so none is missing at the edges. */
 	public static inline final spareEdgesBeyondScreen = 2.0;
 
-	/** How far the cream wall behind the blocks stands out, and how much wider it is than the wall (it runs on behind the neighbours). */
-	public static inline final creamWallDepth = 0.03;
+	/** Every column stands this tall at rest (edges), up to this much taller at full band, and this much more on a kick. */
+	public static inline final columnRests = 0.06;
 
-	public static inline final creamWallWiderTimes = 1.1;
+	public static inline final columnRisesWithBand = 0.45;
+	public static inline final columnRisesWithKick = 0.15;
 
-	/** Every block stands out this far at rest, up to this much more at full band, and this much more on a kick. */
-	public static inline final blockRestsOut = 0.05;
+	/** Sound takes this long to ripple from the middle of the screen to its edge (seconds). */
+	public static inline final echoSecondsAcrossScreen = 0.5;
 
-	public static inline final bandPushesOut = 0.22;
-	public static inline final kickPushesOut = 0.08;
+	// ——— The wave of turning blocks between tilings (see scene/TurnWave.hx) ———
 
-	/** A kite's face is this bright (0 deep to 1 its shade) with its notes silent, and full when they sound. */
-	public static inline final faceAtRest = 0.4;
+	/** The wave turns the whole field over in this long (seconds). */
+	public static inline final turnWaveSeconds = 2.4;
 
-	/** A block's sides are this bright (0 deep to 1 its shade) at rest, and full at full band. */
-	public static inline final sidesAtRest = 0.25;
+	/** Each block turns over while the wave travels on this share of the field's reach: more is a wider, softer wave. */
+	public static inline final blockTurnsWhileWaveTravels = 0.25;
 
-	/** The walls slide towards the camera this fast (corridor units a second), and this much faster at a full kick. */
-	public static inline final travelPerSecond = 0.35;
+	// ——— The camera ———
 
-	public static inline final kickRushesOn = 1.5;
-
-	// ——— The doorway between tilings (see scene/Doorway.hx and scene/Door.hx) ———
-
-	/**
-	 * The door appears (open) this far down the corridor, has closed by this
-	 * distance, starts opening again this close (when it fills the screen)
-	 * and is wide open by this close. The next corridor takes over once the
-	 * door is the last distance behind the camera.
-	 */
-	public static inline final doorwayAppearsAt = 3.6;
-
-	public static inline final doorShutBy = 2.6;
-	public static inline final doorStartsOpeningAt = 1.1;
-	public static inline final doorFullyOpenAt = 0.3;
-	public static inline final doorwayPassedBehind = 0.5;
-
-	/** The door's cream frame: this thick when it has risen out of the walls, and standing this far out, as a share of half the width. */
-	public static inline final doorFrame = 0.08;
-
-	/** Wide open, each block has slid this many half widths out from the middle, and turned this far, like an iris. */
-	public static inline final doorOpensWidths = 1.8;
-
-	public static inline final doorTwistsDegrees = 30.0;
-
-	// ——— The camera and the light ———
-
-	/** How wide the camera sees (up to down, degrees). */
-	public static inline final fieldOfViewDegrees = 75.0;
-
-	/** Nothing nearer or further than these (corridor units) is drawn. */
-	public static inline final nearestSeen = 0.01;
-
-	public static inline final furthestSeen = 100.0;
-
-	/** Fog: none before this far, full (the tiling's deep colour) at the end of the corridor. */
-	public static inline final fogStartsCorridorWidths = 1.5;
+	/** The camera looks down at the field tilted this far from straight down (degrees), so the columns' fronts show below their tops. */
+	public static inline final viewTiltDegrees = 35.0;
 
 	/** Sharper than this many pixels per screen point isn't drawn, to keep phones smooth. */
 	public static inline final sharpestPixelRatio = 2.0;
-
-	/** The camera looks this far ahead, wandering this far off the middle, and rolls a little; each drifts at its own pace. */
-	public static inline final cameraLooksThisFarAhead = 5.0;
-
-	public static inline final cameraWanders = 0.35;
-	public static inline final cameraWandersAcrossPerSecond = 0.023;
-	public static inline final cameraWandersUpPerSecond = 0.013;
-	public static inline final cameraRollsDegrees = 4.0;
-	public static inline final cameraRollsPerSecond = 0.017;
-
-	/**
-	 * Soft, matte light. The "sky" is behind the camera (and a little
-	 * above), the night ahead, so every wall is lit alike: block faces
-	 * turned towards you are bright, faces turned away are dark. A gentle
-	 * sun from above, to one side and behind tells the four walls apart.
-	 */
-	public static inline final skyLightColour = 0xfff1dc;
-
-	public static inline final groundLightColour = 0x0d1322;
-	public static inline final skyLightStrength = 0.8;
-	public static final skyLightComesFrom = {x: 0.0, y: 0.5, z: 1.0};
-	public static inline final sunColour = 0xffffff;
-	public static inline final sunStrength = 0.7;
-	public static final sunComesFrom = {x: 0.6, y: 0.5, z: 0.6};
 }

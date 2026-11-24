@@ -93,7 +93,7 @@ import js.html.CanvasElement;
 	function setSize(width:Float, height:Float):Void;
 	function setPixelRatio(ratio:Float):Void;
 	var shadowMap(default, null):{enabled:Bool, type:Int};
-	function render(scene:Scene, camera:PerspectiveCamera):Void;
+	function render(scene:Scene, camera:Object3D):Void;
 }
 
 /** A list of numbers handed to the graphics card: three to a corner for places and colours. */
@@ -134,6 +134,11 @@ import js.html.CanvasElement;
 	});
 }
 
+/** A surface in flat colour, with no light or shade at all. */
+@:native("THREE.MeshBasicMaterial") extern class MeshBasicMaterial extends Material {
+	function new(options:{?color:Int, ?vertexColors:Bool, ?side:Int});
+}
+
 @:native("THREE.Mesh") extern class Mesh extends Object3D {
 	function new(geometry:BufferGeometry, material:Material);
 	var geometry:BufferGeometry;
@@ -146,6 +151,7 @@ import js.html.CanvasElement;
 
 /** A camera that sees without perspective: the sun uses one to work out its shadows. */
 @:native("THREE.OrthographicCamera") extern class OrthographicCamera extends Object3D {
+	function new(left:Float, right:Float, top:Float, bottom:Float, near:Float, far:Float);
 	var left:Float;
 	var right:Float;
 	var top:Float;

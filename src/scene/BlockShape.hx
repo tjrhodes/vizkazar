@@ -5,8 +5,8 @@ import three.Three;
 /**
  * The shape the graphics card draws for a set of blocks, made from a
  * MeshWriter's lists of numbers. The blocks are rewritten every frame and
- * how many there are changes (blocks cut off at a wall's edge, or by the
- * doorway, can vanish), so each frame only the part written is drawn.
+ * how many there are changes (blocks on their edge are left out), so each
+ * frame only the part written is drawn.
  */
 class BlockShape {
 	public var geometry(default, null) = new BufferGeometry();
@@ -17,15 +17,9 @@ class BlockShape {
 
 	public function new() {}
 
-	/** The look every block shares: matte, softly lit, flat faces, coloured corner by corner. */
-	public static function matte():MeshStandardMaterial {
-		return new MeshStandardMaterial({
-			vertexColors: true,
-			flatShading: true,
-			roughness: 1,
-			metalness: 0,
-			side: Three.DoubleSide
-		});
+	/** The look every block shares: flat colours, coloured corner by corner, with no light at all. */
+	public static function flat():MeshBasicMaterial {
+		return new MeshBasicMaterial({vertexColors: true, side: Three.DoubleSide});
 	}
 
 	/** Starts drawing from a new writer's lists (a new tiling was laid); the old shape is let go. */
