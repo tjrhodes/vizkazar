@@ -5,6 +5,7 @@ import js.html.AudioElement;
 import js.html.File;
 import js.html.MediaStream;
 import js.html.URL;
+import js.html.URLSearchParams;
 import js.html.audio.AudioContext;
 import js.html.audio.MediaStreamAudioSourceNode;
 import js.lib.Promise;
@@ -17,6 +18,8 @@ import js.lib.Promise;
  * wired to the ear only: playing a room back into itself would howl.
  */
 class SoundDesk {
+	static inline final millisecondsInASecond = 1000;
+
 	public final ear:Ear;
 	public final player:AudioElement;
 
@@ -33,6 +36,32 @@ class SoundDesk {
 		final playerSound = context.createMediaElementSource(player);
 		playerSound.connect(ear.input);
 		playerSound.connect(context.destination);
+	}
+
+	/**
+	 * How far behind the sound the pictures should run (seconds), so they
+	 * move as you hear it, not before. The ear hears the sound as it goes
+	 * into the speakers' queue; the sound card and the computer then take a
+	 * while (often 20 to 60 thousandths of a second, more over Bluetooth)
+	 * to play it, and the browser says how long. The microphone's sound is
+	 * already in the room, so it gets no wait of its own. On top comes any
+	 * extra wait set in Settings, or in the page's address (`?delay=40`, in
+	 * thousandths of a second), to tune by eye.
+	 */
+	public function picturesWait():Float {
+		final speakersWait = microphone != null ? 0 : reported(untyped context.baseLatency) + reported(untyped context.outputLatency);
+		return Math.max(0, speakersWait + extraWait);
+	}
+
+	/** A latency the browser may not report: none if it doesn't. */
+	static function reported(seconds:Null<Float>):Float {
+		return seconds == null || Math.isNaN(seconds) ? 0 : seconds;
+	}
+
+	/** The extra wait for the pictures: from the page's address if it gives one, otherwise from Settings. */
+	static final extraWait = {
+		final asked = Std.parseFloat(new URLSearchParams(Browser.location.search).get("delay"));
+		Math.isNaN(asked) ? Settings.picturesExtraWaitSeconds : asked / millisecondsInASecond;
 	}
 
 	public function playDefaultTrack() {

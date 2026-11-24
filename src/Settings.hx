@@ -171,6 +171,14 @@ class Settings {
 	/** With no kicks, the clock keeps counting bars for this many, then gives up. */
 	public static inline final barsClockRunsOnWithoutKicks = 16;
 
+	/**
+	 * The pictures already wait for the speakers (the browser says how long
+	 * its sound takes to come out; see SoundDesk.picturesWait). This much
+	 * more (seconds) can be added, or taken away if below 0, to taste.
+	 * `?delay=40` in the page's address overrides it, in thousandths.
+	 */
+	public static inline final picturesExtraWaitSeconds = 0.0;
+
 	// ——— How sound ripples outwards ———
 
 	/** How far back the memory goes: long enough for sound to ripple out past the screen's corners. */

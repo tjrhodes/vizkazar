@@ -58,20 +58,27 @@ class Main {
 		Browser.window.requestAnimationFrame(frame);
 	}
 
-	/** One frame; `millisecondsOpen` is how long the page has been open. */
+	/**
+	 * One frame; `millisecondsOpen` is how long the page has been open.
+	 * The ear hears the sound before it comes out of the speakers, so the
+	 * pictures show the moment you are hearing (`seen`), a little behind
+	 * what the ear has just heard (see SoundDesk.picturesWait). Changes are
+	 * still planned from what the ear hears, and land when you hear the beat.
+	 */
 	function frame(millisecondsOpen:Float) {
 		final now = millisecondsOpen / millisecondsInASecond;
 		final frameSeconds = now - lastFrameAt;
 		lastFrameAt = now;
-		final moment = listen(frameSeconds, now);
-		if (conductor.follow(moment, frameSeconds))
+		final heard = listen(frameSeconds, now);
+		if (conductor.follow(heard, frameSeconds))
 			changeWaiting = true;
 		planChangeIfDue(now);
-		startWaveIfDue(now);
+		final seen = now - desk.picturesWait();
+		startWaveIfDue(seen);
 		wave.advance(frameSeconds);
-		final pose = conductor.pose(moment, now);
-		build(pose, now);
-		stage.show(widthShown(now), pose.zoom);
+		final pose = conductor.pose(memory.momentFrom(0, seen), seen);
+		build(pose, seen);
+		stage.show(widthShown(seen), pose.zoom);
 		Browser.window.requestAnimationFrame(frame);
 	}
 

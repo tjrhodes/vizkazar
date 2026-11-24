@@ -55,6 +55,12 @@ diamond columns of the Rai 2 ident.
   on beat one. On amelie2 it finds the 3-second bar within a few seconds of
   the first sounds, and changes land within about a hundredth of a second of
   the beat.
+- **In step with what you hear**: the ear hears the sound as it is queued
+  for the speakers, a little before you hear it (about 60 thousandths of a
+  second on Tom's machine, more over Bluetooth). The browser says how long,
+  and the pictures wait that long (`SoundDesk.picturesWait`). More can be
+  added in `Settings.picturesExtraWaitSeconds`, or tried by eye with
+  `?delay=40` (thousandths of a second) on the page's address.
 
 ## Where things are
 
