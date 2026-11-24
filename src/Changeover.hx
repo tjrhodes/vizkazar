@@ -24,13 +24,17 @@ class Changeover {
 		return turnsAt != null;
 	}
 
-	/** Plans a change for the next phrase (or the next bar, if `soon`), or a short while off with no beat. */
-	public function plan(clock:BarClock, now:Float, soon:Bool) {
-		final bar = clock.barLength(now);
+	/**
+	 * Plans a change for the next phrase (or the next bar, if `soon`), or a
+	 * short while off with no beat. The clock counts in the track's time
+	 * (`trackNow`); the plan is kept in the page's (`now`).
+	 */
+	public function plan(clock:BarClock, now:Float, trackNow:Float, soon:Bool) {
+		final bar = clock.barLength(trackNow);
 		closesInFor = bar != null ? bar * Settings.closeUpBars : Settings.closeUpSecondsWithoutBeat;
 		turnSeconds = bar != null ? bar * Settings.turnWaveBars : Settings.turnWaveSecondsWithoutBeat;
-		final phrase = clock.nextPhraseStart(now + closesInFor, soon ? 1 : Settings.phraseBars, now);
-		turnsAt = phrase != null && phrase >= now ? phrase : now + closesInFor;
+		final phrase = clock.nextPhraseStart(trackNow + closesInFor, soon ? 1 : Settings.phraseBars, trackNow);
+		turnsAt = phrase != null && phrase >= trackNow ? now + phrase - trackNow : now + closesInFor;
 	}
 
 	/** Whether the turning should start now; once it has, the plan is spent. */

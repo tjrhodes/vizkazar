@@ -53,6 +53,8 @@ class Main {
 		nextField = new Field(stage);
 		nextField.show(false);
 		field.lay(conductor.tiling);
+		desk.whenJumped = clock.trackJumped;
+		desk.whenNewSound = clock.forget;
 		new Controls(desk, conductor);
 		Browser.window.onresize = stage.fitToWindow;
 		Browser.window.requestAnimationFrame(frame);
@@ -69,10 +71,11 @@ class Main {
 		final now = millisecondsOpen / millisecondsInASecond;
 		final frameSeconds = now - lastFrameAt;
 		lastFrameAt = now;
-		final heard = listen(frameSeconds, now);
+		final trackNow = desk.trackTime(now);
+		final heard = listen(frameSeconds, now, trackNow);
 		if (conductor.follow(heard, frameSeconds))
 			changeWaiting = true;
-		planChangeIfDue(now);
+		planChangeIfDue(now, trackNow);
 		final seen = now - desk.picturesWait();
 		startWaveIfDue(seen);
 		wave.advance(frameSeconds);
@@ -82,12 +85,12 @@ class Main {
 		Browser.window.requestAnimationFrame(frame);
 	}
 
-	/** This frame's sound: remembered (so it can ripple outwards), and its kick, if any, kept time by. */
-	function listen(frameSeconds:Float, now:Float):Moment {
+	/** This frame's sound: remembered (so it can ripple outwards), and its kick, if any, kept time by in the track's time. */
+	function listen(frameSeconds:Float, now:Float, trackNow:Float):Moment {
 		final moment = desk.ear.hear(frameSeconds);
 		memory.remember(moment, now);
 		if (moment.kickLandedSecondsAgo != null)
-			clock.hearKick(now - moment.kickLandedSecondsAgo);
+			clock.hearKick(trackNow - moment.kickLandedSecondsAgo);
 		return moment;
 	}
 
@@ -96,14 +99,14 @@ class Main {
 	 * it has changed its mind back again: the new tiling is laid now, out
 	 * of sight. A change picked from the menu comes on the next bar.
 	 */
-	function planChangeIfDue(now:Float) {
+	function planChangeIfDue(now:Float, trackNow:Float) {
 		if (!changeWaiting || changeover.isPlanned() || wave.going)
 			return;
 		changeWaiting = false;
 		if (conductor.tiling == field.tiling)
 			return;
 		nextField.lay(conductor.tiling);
-		changeover.plan(clock, now, conductor.pinnedTiling != null);
+		changeover.plan(clock, now, trackNow, conductor.pinnedTiling != null);
 	}
 
 	/** On the planned beat, the new field comes into sight, on its edge, and the wave sets off. */

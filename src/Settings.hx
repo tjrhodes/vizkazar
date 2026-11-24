@@ -158,15 +158,28 @@ class Settings {
 
 	public static inline final downbeatKicksToKeepStep = 2;
 
-	/** A kick this close to beat one (a share of a sixteenth) counts as on it, and a newly worked-out bar length this different (a share) replaces the old. */
+	/** A kick this close to beat one (a share of a sixteenth) counts as on it, and a newly worked-out bar length this different (a share) replaces the old… */
 	public static inline final downbeatSlackSixteenths = 0.45;
 
 	public static inline final barLengthChangesBy = 0.03;
+
+	/** …but only once the kicks heard since the beat came in (or the last jump) cover this many bars of it. */
+	public static inline final barsHeardBeforeNewLength = 6;
 
 	/** A gap in the kicks this long (seconds, before the bar is known; then bars) means the beat stopped: its next kick is beat one again. */
 	public static inline final secondsWithoutKicksBeforeNewStart = 4.0;
 
 	public static inline final barsWithoutKicksBeforeNewStart = 2;
+
+	/**
+	 * The track's clock (where the player has got to) is followed gently,
+	 * this share of the way each frame, as the player reports it unevenly;
+	 * a difference bigger than this (seconds) is a jump or a pause, and is
+	 * taken at once.
+	 */
+	public static inline final trackClockFollows = 0.05;
+
+	public static inline final trackClockTrustedAfterJumpOf = 0.1;
 
 	/** With no kicks, the clock keeps counting bars for this many, then gives up. */
 	public static inline final barsClockRunsOnWithoutKicks = 16;

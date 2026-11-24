@@ -11,7 +11,8 @@ package sound;
  * in step by following the kicks that land on beat one, so a length a
  * hair out doesn't drift.
  *
- * Times are the frame loop's seconds.
+ * Times are the track's own seconds (see SoundDesk.trackTime), so the bars
+ * stay where they are in the music when the visitor jumps about in it.
  */
 class BarClock {
 	static inline final sixteenthsInABar = 16;
@@ -27,6 +28,13 @@ class BarClock {
 	/** The kicks since the beat came in (the most recent stretch of them). */
 	var kicks:Array<Float> = [];
 
+	/**
+	 * Every kick heard on beat one since the bars were found, by bar: a
+	 * long record, kept through jumps in the track, so the bars can be fitted
+	 * very closely however far the visitor jumps.
+	 */
+	final beatOnes = new Map<Int, Float>();
+
 	public function new() {}
 
 	/**
@@ -35,28 +43,63 @@ class BarClock {
 	 * clock keeps in step with the beat-one kicks.
 	 */
 	public function hearKick(at:Float) {
-		if (kicks.length == 0 || at - kicks[kicks.length - 1] > silenceThatRestarts())
+		if (isNewBeat(at))
 			restartAt(at);
 		kicks.push(at);
 		kicks = kicks.filter(kick -> at - kick <= Settings.barClockRemembersSeconds);
 		final found = BarLength.fromKicks(kicks);
-		if (found != null && (barSeconds == null || Math.abs(found / barSeconds - 1) > Settings.barLengthChangesBy))
+		if (found != null && (barSeconds == null || isClearlyDifferent(found)))
 			takeBarLength(found);
 		if (barSeconds != null)
 			keepInStep();
 	}
 
+	/**
+	 * Whether a kick `at` starts the beat afresh: the first kick of all,
+	 * or one after a silence. (After a jump in the track the kicks heard
+	 * so far are let go, but the bars stay where they were.)
+	 */
+	function isNewBeat(at:Float):Bool {
+		if (kicks.length == 0)
+			return barSeconds == null;
+		return at - kicks[kicks.length - 1] > silenceThatRestarts();
+	}
+
+	/** The visitor jumped to another place in the track: the bars stay put (they are in the track's time); the kicks heard so far are let go. */
+	public function trackJumped() {
+		kicks = [];
+	}
+
+	/** A new sound (another track, or the microphone): nothing heard so far counts. */
+	public function forget() {
+		kicks = [];
+		barSeconds = null;
+		beatOnes.clear();
+	}
+
+	/** Whether a newly worked-out bar length is really different: quite a lot, and over enough bars to be sure (not a few kicks after a jump). */
+	function isClearlyDifferent(length:Float):Bool {
+		final heard = kicks[kicks.length - 1] - kicks[0];
+		return Math.abs(length / barSeconds - 1) > Settings.barLengthChangesBy && heard >= length * Settings.barsHeardBeforeNewLength;
+	}
+
 	/** A new bar length: bars are counted afresh from bar one, the old count being in the old length. */
 	function takeBarLength(length:Float) {
 		barSeconds = length;
-		latestBeatOne = {bar: 0, at: startedAt};
+		countFrom(startedAt);
+	}
+
+	/** Bar one starts `at`; the old beat-one record no longer fits. */
+	function countFrom(at:Float) {
+		startedAt = at;
+		latestBeatOne = {bar: 0, at: at};
+		beatOnes.clear();
 	}
 
 	/** The beat has come in (again): bar one starts now. The bar length is kept as a first guess. */
 	function restartAt(at:Float) {
 		kicks = [];
-		startedAt = at;
-		latestBeatOne = {bar: 0, at: at};
+		countFrom(at);
 	}
 
 	/** A gap in the kicks this long means the beat has stopped, and its next kick is a new beat one. */
@@ -95,23 +138,26 @@ class BarClock {
 	}
 
 	/**
-	 * Keeps in step: fits a straight line through the beat-one kicks (when
-	 * each landed, against its bar). Its slope is the bar length, and where
-	 * it starts is bar one. If too few kicks land on beat one (the kick it
-	 * started from was a stray), beat one moves to the busiest kick first.
+	 * Keeps in step: adds this stretch's beat-one kicks to the record, and
+	 * fits a straight line through it (when each landed, against its bar).
+	 * Its slope is the bar length, and where it starts is bar one. If the
+	 * record is too short (the kick it started from was a stray), beat one
+	 * moves to the busiest kick first.
 	 */
 	function keepInStep() {
 		final points = downbeatKicks();
-		if (points.length < Settings.downbeatKicksToKeepStep) {
-			moveToBusiestSixteenth();
-			return;
-		}
-		final line = Fit.straightLine([for (point in points) point.bar], [for (point in points) point.at]);
+		for (point in points)
+			beatOnes.set(point.bar, point.at);
+		final bars = [for (bar in beatOnes.keys()) bar];
+		if (bars.length < Settings.downbeatKicksToKeepStep)
+			return moveToBusiestSixteenth();
+		final line = Fit.straightLine([for (bar in bars) bar], [for (bar in bars) beatOnes[bar]]);
 		if (Math.abs(line.slope / barSeconds - 1) > Settings.barLengthChangesBy)
 			return;
 		barSeconds = line.slope;
 		startedAt = line.start;
-		latestBeatOne = points[points.length - 1];
+		if (points.length > 0)
+			latestBeatOne = points[points.length - 1];
 	}
 
 	/** Moves beat one to the sixteenth of the bar where kicks land most often (the first of them, if several tie). */
@@ -125,7 +171,6 @@ class BarClock {
 		for (place in 1...sixteenthsInABar)
 			if (counts[place] > counts[busiest])
 				busiest = place;
-		startedAt += busiest * sixteenth;
-		latestBeatOne = {bar: 0, at: startedAt};
+		countFrom(startedAt + busiest * sixteenth);
 	}
 }

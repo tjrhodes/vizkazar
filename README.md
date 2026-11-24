@@ -54,7 +54,10 @@ diamond columns of the Rai 2 ident.
   a silence is beat one, and the clock keeps in step with the kicks that land
   on beat one. On amelie2 it finds the 3-second bar within a few seconds of
   the first sounds, and changes land within about a hundredth of a second of
-  the beat.
+  the beat. It counts in the track's own time and keeps a record of every
+  beat-one kick, so jumping back and forth in a track it has heard keeps the
+  bars where they are. (Jumping into a track it hasn't heard yet, beat one
+  is a guess: kicks alone can't always tell which one is the one.)
 - **In step with what you hear**: the ear hears the sound as it is queued
   for the speakers, a little before you hear it (about 60 thousandths of a
   second on Tom's machine, more over Bluetooth). The browser says how long,

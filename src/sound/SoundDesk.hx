@@ -30,12 +30,39 @@ class SoundDesk {
 	/** A file brought by the visitor is lent to the player as a temporary address. */
 	var lentAddress:Null<String> = null;
 
+	/** What to do when the visitor jumps to another place in the track, and when a new sound starts (a track, or the microphone). */
+	public var whenJumped:() -> Void = () -> {};
+
+	public var whenNewSound:() -> Void = () -> {};
+
+	/** How far the track's clock is ahead of the page's (see trackTime). */
+	var trackAhead = 0.0;
+
 	public function new(player:AudioElement) {
 		this.player = player;
 		ear = new Ear(context);
 		final playerSound = context.createMediaElementSource(player);
 		playerSound.connect(ear.input);
 		playerSound.connect(context.destination);
+		player.addEventListener("seeked", () -> whenJumped());
+	}
+
+	/**
+	 * The time (seconds) by the sound's own clock: where the track has got
+	 * to, so a moment in the music keeps its time however the visitor jumps
+	 * about. The player reports it a little unevenly, so it is followed
+	 * gently, and taken at its word after a jump or a pause. The microphone
+	 * has no track, so it goes by the page's clock.
+	 */
+	public function trackTime(now:Float):Float {
+		if (microphone != null)
+			return now;
+		final reported = player.currentTime - now;
+		if (Math.abs(reported - trackAhead) > Settings.trackClockTrustedAfterJumpOf)
+			trackAhead = reported;
+		else
+			trackAhead += (reported - trackAhead) * Settings.trackClockFollows;
+		return now + trackAhead;
 	}
 
 	/**
@@ -88,6 +115,7 @@ class SoundDesk {
 
 	function playFrom(address:String) {
 		unplugMicrophone();
+		whenNewSound();
 		wake();
 		player.src = address;
 		player.play();
@@ -100,6 +128,7 @@ class SoundDesk {
 
 	function plugInMicrophone(stream:MediaStream) {
 		unplugMicrophone();
+		whenNewSound();
 		microphoneStream = stream;
 		microphone = context.createMediaStreamSource(stream);
 		microphone.connect(ear.input);
