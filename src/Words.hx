@@ -14,6 +14,7 @@ typedef Said = {
 	complexity:String,
 	followTheMusic:String,
 	fullScreen:String,
+	exitFullScreen:String,
 	picture:String,
 	timeIntoTrack:String,
 	/** A tiling's name in the menu, from its number of folds (4, 6, 8, 12). */
@@ -38,6 +39,7 @@ class Words {
 		complexity: "Complexity",
 		followTheMusic: "Follow the music",
 		fullScreen: "Full screen",
+		exitFullScreen: "Exit full screen",
 		picture: "A field of star-shaped blocks that rise, change colour and turn over with the music",
 		timeIntoTrack: "Time into the track",
 		folds: count -> '$count-fold'
@@ -55,6 +57,7 @@ class Words {
 		complexity: "Complessità",
 		followTheMusic: "Segui la musica",
 		fullScreen: "Schermo intero",
+		exitFullScreen: "Esci da schermo intero",
 		picture: "Un campo di blocchi a forma di stella che si alzano, cambiano colore e si capovolgono con la musica",
 		timeIntoTrack: "Tempo trascorso",
 		folds: count -> 'Simmetria $count'

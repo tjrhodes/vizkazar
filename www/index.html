@@ -39,15 +39,20 @@
   :focus-visible { outline: 2px solid var(--lichen); outline-offset: 2px; }
 
   /* Every control shares the site's button look: condensed capitals, a thin outline that turns lichen. */
-  button, select, .file-chooser {
+  button, .control {
+    position: relative; display: inline-flex; align-items: center; gap: 7px;
     font: 500 .8rem var(--cond); letter-spacing: .12em; text-transform: uppercase; color: var(--white-soft);
     background: transparent; cursor: pointer; border: 1px solid var(--edge); border-radius: var(--radius); padding: 8px 12px;
     transition: border-color .15s ease, color .15s ease, background-color .15s ease;
   }
-  button:hover, select:hover, .file-chooser:hover { border-color: var(--lichen); color: #fff; }
-  select { background: var(--rock-deep); }
-  .file-chooser input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-  .file-chooser:focus-within { outline: 2px solid var(--lichen); outline-offset: 2px; }
+  button:hover, .control:hover { border-color: var(--lichen); color: #fff; }
+  .control:focus-within { outline: 2px solid var(--lichen); outline-offset: 2px; }
+  .icon { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .menu-arrow { width: 14px; height: 14px; margin-left: -2px; }
+  /* The file input and the menu lie invisibly over their whole button, so a tap anywhere on it opens them. */
+  .control input, .control select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px; }
+  #complexity-chooser { background: var(--rock-deep); }
+  option { background: var(--rock-deep); color: var(--white-soft); }
 
   #welcome {
     position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 18px;
@@ -69,12 +74,20 @@
     display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px;
     padding: 8px 10px; background: rgba(27, 40, 72, .88); border: 1px solid rgba(255, 255, 255, .14); border-radius: var(--radius);
   }
-  #play-pause { background: var(--lichen); color: var(--rock); border-color: var(--lichen); min-width: 7.5em; }
+  #play-pause { background: var(--lichen); color: var(--rock); border-color: var(--lichen); min-width: 7.5em; justify-content: center; }
   #play-pause:hover { background: var(--lichen-bright); color: var(--rock); }
   #now-playing { color: #fff; font-weight: 400; padding: 0 4px 0 6px; max-width: 24ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #time { color: var(--sand); font-variant-numeric: tabular-nums; min-width: 4ch; padding-right: 4px; }
-  #complexity-label { font: 500 .8rem var(--cond); letter-spacing: .12em; text-transform: uppercase; color: var(--sand); padding-left: 6px; }
-  @media (max-width: 560px) { #controls { gap: 6px; padding: 6px; } button, select, .file-chooser { padding: 7px 9px; } #complexity-label { display: none; } }
+  /* A phone: icons only, all on one row; the track's name gives way first. */
+  @media (max-width: 600px) {
+    #controls { flex-wrap: nowrap; gap: 6px; padding: 6px; width: auto; }
+    button, .control { padding: 9px; }
+    #play-pause { min-width: 0; }
+    .words { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .menu-arrow { display: none; }
+    #now-playing { flex: 1 1 auto; min-width: 0; padding: 0 2px 0 4px; }
+    #time { min-width: 0; padding-right: 2px; }
+  }
 </style>
 </head>
 <body>
@@ -89,15 +102,28 @@
   <button id="start"></button>
 </div>
 
+<!-- The panel's icons, drawn once and used by every button below. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="icon-play" viewBox="0 0 24 24"><path d="M7 4.5 19.5 12 7 19.5z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="icon-pause" viewBox="0 0 24 24"><path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="icon-own-audio" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+  <symbol id="icon-microphone" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 10.5v1a7 7 0 0 0 14 0v-1M12 18.5v3"/></symbol>
+  <symbol id="icon-star" viewBox="0 0 24 24"><path d="M12.0 1.0 9.6 6.3 4.2 4.2 6.3 9.6 1.0 12.0 6.3 14.4 4.2 19.8 9.6 17.7 12.0 23.0 14.4 17.7 19.8 19.8 17.7 14.4 23.0 12.0 17.7 9.6 19.8 4.2 14.4 6.3z"/></symbol>
+  <symbol id="icon-full-screen" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></symbol>
+  <symbol id="icon-exit-full-screen" viewBox="0 0 24 24"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M16 21v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></symbol>
+  <symbol id="icon-menu-arrow" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+</svg>
+
+<!-- Each control is an icon and its words; on a phone only the icon shows, and the words stay for screen readers. -->
 <div id="controls" hidden>
-  <button id="play-pause"></button>
+  <button id="play-pause"><svg class="icon"><use href="#icon-pause"/></svg><span class="words"></span></button>
   <span id="now-playing"></span>
   <span id="time">0:00</span>
-  <label class="file-chooser"><span id="own-audio-label"></span><input id="own-audio" type="file" accept="audio/*,video/mp4,.flac,.ogg,.m4a"></label>
-  <button id="microphone"></button>
-  <label id="complexity-label" for="complexity"></label>
-  <select id="complexity"><option id="follow-the-music" value="auto"></option></select>
-  <button id="full-screen"></button>
+  <label id="own-audio-chooser" class="control"><svg class="icon"><use href="#icon-own-audio"/></svg><span class="words"></span><input id="own-audio" type="file" accept="audio/*,video/mp4,.flac,.ogg,.m4a"></label>
+  <button id="microphone"><svg class="icon"><use href="#icon-microphone"/></svg><span class="words"></span></button>
+  <label id="complexity-chooser" class="control"><svg class="icon"><use href="#icon-star"/></svg><span class="words"></span><svg class="icon menu-arrow"><use href="#icon-menu-arrow"/></svg>
+    <select id="complexity"><option id="follow-the-music" value="auto"></option></select></label>
+  <button id="full-screen"><svg class="icon"><use href="#icon-full-screen"/></svg><span class="words"></span></button>
 </div>
 
 <script src="vendor/three.min.js"></script>

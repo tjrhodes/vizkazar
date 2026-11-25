@@ -28,6 +28,8 @@ class Controls {
 		whenClicked("full-screen", fillTheScreen);
 		part("own-audio").onchange = playChosenFile;
 		part("complexity").onchange = pinChosenTiling;
+		Browser.document.addEventListener("fullscreenchange", showFullScreenOrNot);
+		part("full-screen").hidden = !Browser.document.fullscreenEnabled; // an iPhone can't fill the screen with a page
 		desk.player.onplay = desk.player.onpause = showPlayingOrPaused;
 		desk.player.ontimeupdate = showWhereWeAre;
 	}
@@ -61,6 +63,13 @@ class Controls {
 			document.documentElement.requestFullscreen();
 	}
 
+	/** The full-screen button offers the way back while the screen is filled. */
+	function showFullScreenOrNot() {
+		final filled = Browser.document.fullscreenElement != null;
+		name("full-screen", filled ? Words.said.exitFullScreen : Words.said.fullScreen);
+		showIcon("full-screen", filled ? "exit-full-screen" : "full-screen");
+	}
+
 	/** Every word on the page, in its language. */
 	function sayEverything() {
 		final said = Words.said;
@@ -69,18 +78,32 @@ class Controls {
 		say("welcome-title", said.title);
 		say("welcome-intro", said.intro);
 		say("start", said.start);
-		say("play-pause", said.pause);
-		say("own-audio-label", said.ownAudio);
-		say("microphone", said.microphone);
-		say("complexity-label", said.complexity);
+		name("play-pause", said.pause);
+		name("own-audio-chooser", said.ownAudio);
+		name("microphone", said.microphone);
 		say("follow-the-music", said.followTheMusic);
-		say("full-screen", said.fullScreen);
+		name("complexity-chooser", said.complexity);
+		say("complexity-chooser .words", said.followTheMusic);
+		part("complexity").setAttribute("aria-label", said.complexity);
+		name("full-screen", said.fullScreen);
 		part("stage").setAttribute("aria-label", said.picture);
 		part("time").setAttribute("aria-label", said.timeIntoTrack);
 	}
 
+	/** Words into the part with this id, or into the part a selector like "complexity-chooser .words" picks. */
 	static function say(id:String, words:String) {
-		part(id).textContent = words;
+		Browser.document.querySelector('#$id').textContent = words;
+	}
+
+	/** A control's words: beside its icon on a wide screen, and on any screen as its tooltip and for screen readers. */
+	static function name(id:String, words:String) {
+		say('$id .words', words);
+		part(id).title = words;
+	}
+
+	/** Swap the icon on a control for another of the page's icons (`icon-<icon>` in index.html). */
+	static function showIcon(id:String, icon:String) {
+		Browser.document.querySelector('#$id use').setAttribute("href", '#icon-$icon');
 	}
 
 	/** The menu offers "follow the music" plus every tiling there is, named by its folds (the sides of its middle tile). */
@@ -94,13 +117,16 @@ class Controls {
 	}
 
 	function pinChosenTiling() {
-		final chosen = (cast part("complexity") : SelectElement).value;
+		final menu:SelectElement = cast part("complexity");
+		final chosen = menu.value;
+		say("complexity-chooser .words", menu.options[menu.selectedIndex].textContent);
 		conductor.pinnedTiling = chosen == followTheMusic ? null : Tilings.simplestFirst.filter(tiling -> tiling.name == chosen)[0];
 	}
 
 	function showPlayingOrPaused() {
-		final button = part("play-pause");
-		button.textContent = desk.player.paused ? Words.said.play : Words.said.pause;
+		final paused = desk.player.paused;
+		name("play-pause", paused ? Words.said.play : Words.said.pause);
+		showIcon("play-pause", paused ? "play" : "pause");
 	}
 
 	/** Minutes and seconds into the track, so a moment can be pointed at ("it goes wrong at 2:13"). */
